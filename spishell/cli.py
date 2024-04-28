@@ -3,9 +3,11 @@ Main command-line interface module.
 Will run an input loop when executed.
 '''
 import sys
+import traceback
 import importlib
 from difflib import get_close_matches
 from string import Template
+# pylint: disable=import-error
 from registry import register_command, commands, command_aliases, variables
 from spi import SpiInterface, SpiMode
 
@@ -42,7 +44,10 @@ def run_command(line):
   function = commands[command]
   dict_args = {"spi": SPI, "line": args}
 
-  function(**dict_args)
+  try:
+    function(**dict_args)
+  except Exception:
+    print(traceback.format_exc())
 
 @register_command("quit", "q")
 def quit_cmd(**_):
@@ -85,6 +90,12 @@ def import_module(line, **_):
   '''Imports a module from the \'module\' subdirectory.'''
   print(f"Importing module {line}")
   importlib.import_module(f"modules.{line}")
+
+@register_command('reload')
+def reload_module(line, **_):
+  '''Reloads an imported module.'''
+  module = importlib.import_module(f"modules.{line}")
+  importlib.reload(module)
 
 @register_command("debug")
 def debug(**_):
